@@ -12,25 +12,51 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Baixar codigo
+      - name: Checkout 
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurar Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Compilar APK
-        run: gradle --no-daemon assembleDebug
+      - name: Extract project
+        run: |
+          unzip -q
+      SagaMunicipalAndroid.zip -d
+      extrated
+          PROJECT_DIR="$(dirname
+      "$(find extrated -type f -name
+      settings.gradle.kts -print
+      -quit)")"
+          if [ -z "$PROJECT_DIR" ]
+      | | [ ! -f "PROJECT_DIR/app/
+      build.gradle.kts" ]; then
+                   echo "Não encontrei os
+      arquivos do projeto Android dentro
+      do ZIP."
+                  exit]
+                fi
+                echo
+      PROJECT_DIR=$PROJECT_DIR" >>
+      "$GITHUB_ENV"
 
-      - name: Disponibilizar APK
+      - name: Build APK
+        run: |
+         gradle --no-daemon -p
+     "$PROJECT_DIR" assembleDebug
+               cp "$PROJECT_DIR/app/
+      build/outputs/apk/debug/
+      app-debug.apk" ./app-debug.apk
+      - name: Upload APK
         uses: actions/upload-artifact@v4
-        with:
+        with: 
           name: SagaMunicipiosAndroid-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app-debug.apk
           if-no-files-found: error
