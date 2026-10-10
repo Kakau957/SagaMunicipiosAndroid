@@ -28,19 +28,50 @@ jobs:
 
       - name: Extract project
         run: unzip -q SagaMunicipiosAndroid.zip -d extracted
-        
+
+      - name: Configure Java and Kotlin
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          files = list(Path("extracted").rglob("settings.gradle.kts"))
+          if not files:
+              raise SystemExit("Não encontrei settings.gradle.kts no ZIP.")
+
+          project = files[0].parent
+          app_file = project / "app" / "build.gradle.kts"
+          text = app_file.read_text()
+
+          if "sourceCompatibility = JavaVersion.VERSION_17" not in text:
+              text = text.replace(
+                  "    compileSdk = 35",
+                  """    compileSdk = 35
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }""",
+                  1
+              )
+
+          app_file.write_text(text)
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              env.write(f"PROJECT_DIR={project}\\n")
+          PY
+
       - name: Build APK
         run: |
-          PROJECT_DIR="$(dirname "$(find extracted -type f -name settings.gradle.kts -print -quit)")"
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "Não encontrei settings.gradle.kts dentro do ZIP."
-            exit 1
-          fi
           gradle --no-daemon -p "$PROJECT_DIR" assembleDebug
+          cp "$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk" app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SagaMunicipiosAndroid-APK
-          path: extracted/SagaMunicipiosAndroid-5/app/build/outputs/apk/debug/app-debug.apk
+          path: app-debug.apk
           if-no-files-found: error
