@@ -1,10 +1,10 @@
 name: Build Android APK
 
 on:
-   workflow_dispatch:
-   push:
-     branches:
-     - main
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -12,9 +12,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout 
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -27,36 +27,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Extract project
-        run: |
-          unzip -q
-      SagaMunicipalAndroid.zip -d
-      extrated
-          PROJECT_DIR="$(dirname
-      "$(find extrated -type f -name
-      settings.gradle.kts -print
-      -quit)")"
-          if [ -z "$PROJECT_DIR" ]
-      | | [ ! -f "PROJECT_DIR/app/
-      build.gradle.kts" ]; then
-                   echo "Não encontrei os
-      arquivos do projeto Android dentro
-      do ZIP."
-                  exit]
-                fi
-                echo
-      PROJECT_DIR=$PROJECT_DIR" >>
-      "$GITHUB_ENV"
+        run: unzip -q SagaMunicipiosAndroid.zip -d extracted
 
       - name: Build APK
         run: |
-         gradle --no-daemon -p
-     "$PROJECT_DIR" assembleDebug
-               cp "$PROJECT_DIR/app/
-      build/outputs/apk/debug/
-      app-debug.apk" ./app-debug.apk
+          gradle --no-daemon -p extracted/SagaMunicipiosAndroid-5 assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        with: 
+        with:
           name: SagaMunicipiosAndroid-APK
-          path: app-debug.apk
+          path: extracted/SagaMunicipiosAndroid-5/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
